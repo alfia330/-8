@@ -1,41 +1,45 @@
-﻿using System;
+﻿//9.3
+using System;
+using System.Collections.Generic;
+using System.IO;
 
-class BankAccount
+class BankTransaction
 {
-    private string accountNumber;
+    public readonly DateTime Time;
+    public readonly decimal Amount;
+    public BankTransaction(decimal amount) { Time = DateTime.Now; Amount = amount; }
+    public override string ToString() => $"{Time} {Amount:+0;-0}";
+}
+
+class BankAccount : IDisposable
+{
     private decimal balance;
-    private string accountType;
+    private Queue<BankTransaction> transactions = new Queue<BankTransaction>();
 
-    public string AccountNumber => accountNumber;
     public decimal Balance => balance;
-    public string AccountType => accountType;
 
-    public BankAccount() : this(0, "обычный") { }
-    public BankAccount(decimal balance) : this(balance, "обычный") { }
-    public BankAccount(string accountType) : this(0, accountType) { }
+    public void Deposit(decimal amount) { balance += amount; transactions.Enqueue(new BankTransaction(amount)); }
+    public void Withdraw(decimal amount) { balance -= amount; transactions.Enqueue(new BankTransaction(-amount)); }
 
-    public BankAccount(decimal balance, string accountType)
+    public void Dispose()
     {
-        GenerateNumber();
-        this.balance = balance;
-        this.accountType = accountType;
+        using (StreamWriter sw = new StreamWriter("transactions.txt"))
+            foreach (var t in transactions)
+                sw.WriteLine(t);
+        GC.SuppressFinalize(this);
     }
-
-    private void GenerateNumber() => accountNumber = Guid.NewGuid().ToString();
 }
 
 class Program
 {
     static void Main()
     {
-        var a1 = new BankAccount();
-        var a2 = new BankAccount(1000m);
-        var a3 = new BankAccount("сберегательный");
-        var a4 = new BankAccount(500m, "кредитный");
-
-        Console.WriteLine($"{a1.AccountNumber} {a1.Balance} {a1.AccountType}");
-        Console.WriteLine($"{a2.AccountNumber} {a2.Balance} {a2.AccountType}");
-        Console.WriteLine($"{a3.AccountNumber} {a3.Balance} {a3.AccountType}");
-        Console.WriteLine($"{a4.AccountNumber} {a4.Balance} {a4.AccountType}");
+        using (var acc = new BankAccount())
+        {
+            acc.Deposit(500m);
+            acc.Withdraw(200m);
+            Console.WriteLine($"Баланс: {acc.Balance}");
+        }
+        Console.WriteLine("Проводки записаны в transactions.txt");
     }
 }
