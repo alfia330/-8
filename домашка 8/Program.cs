@@ -1,45 +1,41 @@
-﻿//9.3
+﻿//домашка 9.1
 using System;
-using System.Collections.Generic;
-using System.IO;
 
-class BankTransaction
+class Song
 {
-    public readonly DateTime Time;
-    public readonly decimal Amount;
-    public BankTransaction(decimal amount) { Time = DateTime.Now; Amount = amount; }
-    public override string ToString() => $"{Time} {Amount:+0;-0}";
-}
+    private string name;
+    private string author;
+    private Song prev;
 
-class BankAccount : IDisposable
-{
-    private decimal balance;
-    private Queue<BankTransaction> transactions = new Queue<BankTransaction>();
-
-    public decimal Balance => balance;
-
-    public void Deposit(decimal amount) { balance += amount; transactions.Enqueue(new BankTransaction(amount)); }
-    public void Withdraw(decimal amount) { balance -= amount; transactions.Enqueue(new BankTransaction(-amount)); }
-
-    public void Dispose()
+    public Song(string name, string author)
     {
-        using (StreamWriter sw = new StreamWriter("transactions.txt"))
-            foreach (var t in transactions)
-                sw.WriteLine(t);
-        GC.SuppressFinalize(this);
+        this.name = name;
+        this.author = author;
+        this.prev = null;
     }
+
+    public Song(string name, string author, Song prev)
+    {
+        this.name = name;
+        this.author = author;
+        this.prev = prev;
+    }
+
+    public Song() : this("unknown", "unknown") { }
+
+    public override string ToString() => $"{name} — {author}";
 }
 
 class Program
 {
     static void Main()
     {
-        using (var acc = new BankAccount())
-        {
-            acc.Deposit(500m);
-            acc.Withdraw(200m);
-            Console.WriteLine($"Баланс: {acc.Balance}");
-        }
-        Console.WriteLine("Проводки записаны в transactions.txt");
+        Song song1 = new Song("Blinding Lights", "The Weeknd");
+        Song song2 = new Song("Save Your Tears", "The Weeknd", song1);
+        Song mySong = new Song();
+
+        Console.WriteLine(song1);
+        Console.WriteLine(song2);
+        Console.WriteLine(mySong);
     }
 }
